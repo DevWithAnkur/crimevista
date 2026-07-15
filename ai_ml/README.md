@@ -20,12 +20,14 @@ Make sure you have Python 3.9+ installed.
 2. Create and activate a virtual environment (recommended):
 
    Windows:
+
    ```bash
    python -m venv .venv
    .venv\Scripts\activate
    ```
 
    Linux/macOS:
+
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
@@ -56,6 +58,7 @@ python ai_ml/db_analysis.py
 ```
 
 This will:
+
 - load the FIR dataset,
 - filter the data to Karnataka coordinates,
 - run DBSCAN clustering,
@@ -70,6 +73,7 @@ python ai_ml/kde_analysis.py
 ```
 
 This will generate:
+
 - hotspot_map.html
 
 ### 3. Spatio-temporal hotspot map
@@ -81,6 +85,7 @@ python ai_ml/temporal_analysis.py
 ```
 
 This will generate:
+
 - spatio_temporal_map.html
 
 ## Output files
@@ -108,6 +113,14 @@ Open them in your browser to inspect the maps.
 ## Troubleshooting
 
 - If Python cannot find the dataset, confirm that data/FIR_Details_Data.csv exists in the project root.
+- If the scripts report that the file is a Git LFS pointer, the actual CSV is not present locally. Run:
+
+  ```bash
+  git lfs pull
+  ```
+
+  from the repository root, or restore the dataset from the project source.
+
 - If a module is missing, reinstall dependencies with:
 
   ```bash

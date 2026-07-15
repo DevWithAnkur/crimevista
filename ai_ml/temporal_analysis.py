@@ -1,19 +1,16 @@
-import pandas as pd
 import folium
 from pathlib import Path
 from folium.plugins import HeatMapWithTime
 
+from data_utils import DatasetError, load_crime_dataframe
+
 project_root = Path(__file__).resolve().parent.parent
 data_path = project_root / 'data' / 'FIR_Details_Data.csv'
 
-if not data_path.exists():
-    raise FileNotFoundError(f"Dataset not found at {data_path}")
-
-df = pd.read_csv(data_path, low_memory=False)
-
-lat_col = 'Latitude'
-lon_col = 'Longitude'
-time_col = 'FIR_MONTH' 
+try:
+    df, lat_col, lon_col, time_col = load_crime_dataframe(data_path, require_time_column=True)
+except DatasetError as exc:
+    raise SystemExit(str(exc)) from exc
 
 df = df.dropna(subset=[lat_col, lon_col, time_col])
 

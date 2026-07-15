@@ -1,18 +1,16 @@
-import pandas as pd
 import folium
 from pathlib import Path
 from folium.plugins import HeatMap
 
+from data_utils import DatasetError, load_crime_dataframe
+
 project_root = Path(__file__).resolve().parent.parent
 data_path = project_root / 'data' / 'FIR_Details_Data.csv'
 
-if not data_path.exists():
-    raise FileNotFoundError(f"Dataset not found at {data_path}")
-
-df = pd.read_csv(data_path, low_memory=False)
-
-lat_col = 'Latitude'
-lon_col = 'Longitude'
+try:
+    df, lat_col, lon_col = load_crime_dataframe(data_path)
+except DatasetError as exc:
+    raise SystemExit(str(exc)) from exc
 
 df = df.dropna(subset=[lat_col, lon_col])
 min_lat, max_lat = 11.5, 18.5
