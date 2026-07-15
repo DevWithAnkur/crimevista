@@ -1,0 +1,212 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * CrimeVista — Karnataka Police AI Crime Intelligence Platform
+ * Enterprise command-center theme: deep navy surfaces + gold accent.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-sidebar: var(--navy-sidebar);
+  --color-navy-card: var(--navy-card);
+  --color-navy-elev: var(--navy-elev);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-text-secondary: var(--text-secondary);
+  --color-hairline: var(--hairline);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-elev-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-elev-2: 0 4px 16px -4px rgb(0 0 0 / 0.55);
+  --shadow-elev-3: 0 12px 40px -8px rgb(0 0 0 / 0.6);
+  --shadow-gold: 0 0 0 1px oklch(0.78 0.14 85 / 0.35), 0 6px 24px -6px oklch(0.78 0.14 85 / 0.35);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Command-center palette */
+  --navy-deep: oklch(0.18 0.04 255);        /* #08172B — sidebar */
+  --navy: oklch(0.24 0.05 258);              /* #0B1F3A — background */
+  --navy-card: oklch(0.28 0.05 258);         /* #132743 — cards */
+  --navy-elev: oklch(0.33 0.05 258);         /* elevated surfaces */
+  --navy-sidebar: oklch(0.18 0.04 255);
+
+  --gold: oklch(0.78 0.14 85);               /* #D4AF37 */
+  --gold-soft: oklch(0.78 0.14 85 / 0.15);
+
+  --success: oklch(0.72 0.17 155);
+  --warning: oklch(0.8 0.16 75);
+  --danger: oklch(0.66 0.22 25);
+  --info: oklch(0.7 0.14 235);
+
+  --text-secondary: oklch(0.78 0.02 250);    /* #B8C2CC */
+  --hairline: oklch(1 0 0 / 0.06);
+
+  --background: var(--navy);
+  --foreground: oklch(0.98 0.005 250);
+  --card: var(--navy-card);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: var(--navy-elev);
+  --popover-foreground: oklch(0.98 0.005 250);
+  --primary: var(--gold);
+  --primary-foreground: oklch(0.15 0.03 258);
+  --secondary: var(--navy-elev);
+  --secondary-foreground: oklch(0.98 0.005 250);
+  --muted: oklch(0.32 0.04 258);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--gold-soft);
+  --accent-foreground: var(--gold);
+  --destructive: var(--danger);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: var(--gold);
+
+  --chart-1: oklch(0.78 0.14 85);
+  --chart-2: oklch(0.7 0.14 235);
+  --chart-3: oklch(0.72 0.17 155);
+  --chart-4: oklch(0.66 0.22 25);
+  --chart-5: oklch(0.68 0.18 300);
+
+  --sidebar: var(--navy-sidebar);
+  --sidebar-foreground: oklch(0.9 0.01 250);
+  --sidebar-primary: var(--gold);
+  --sidebar-primary-foreground: oklch(0.15 0.03 258);
+  --sidebar-accent: oklch(1 0 0 / 0.05);
+  --sidebar-accent-foreground: oklch(0.98 0.005 250);
+  --sidebar-border: oklch(1 0 0 / 0.06);
+  --sidebar-ring: var(--gold);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-mono,
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@utility scrollbar-thin {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.08);
+    border-radius: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@utility panel {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elev-2);
+}
+
+@utility panel-inset {
+  background-color: color-mix(in oklab, var(--color-card) 88%, black);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+}
+
+@utility hairline {
+  border-color: var(--color-hairline);
+}
+
+@utility text-secondary {
+  color: var(--color-text-secondary);
+}
+
+@utility gold-chip {
+  background-color: var(--color-gold-soft);
+  color: var(--color-gold);
+  border: 1px solid color-mix(in oklab, var(--color-gold) 40%, transparent);
+}
+
+@keyframes cv-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.35); }
+}
+
+@utility live-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-danger);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-danger) 20%, transparent);
+  animation: cv-pulse 1.8s ease-in-out infinite;
+}
