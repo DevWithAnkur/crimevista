@@ -1,10 +1,15 @@
+import sys
 import time
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+backend_dir = str(Path(__file__).resolve().parent.parent)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from sqlalchemy import text
 from app.db.session import engine, Base
-from app.models.incident import Incident
+from app.models import Incident, Person, Relationship
 
 def run_ingestion():
     print("Initiating database tables and extensions...")

@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from sklearn.cluster import DBSCAN
 from app.db.session import get_db
 from app.models.incident import Incident
+from app.models.person import Person
+from app.models.relationship import Relationship
+from uuid import UUID as PyUUID
 
 router = APIRouter()
 
@@ -74,3 +77,56 @@ def get_risk_scores(db: Session = Depends(get_db)):
           { "district": "Mysuru", "risk_score": 0.65, "reason": "Moderate clustering observed near urban transit corridors." }
         ]
     }
+
+@router.get("/analytics/network/{entity_id}")
+def get_network_analysis(entity_id: str, db: Session = Depends(get_db)):
+    """
+    Returns node and edge relationships linking suspects, victims, and incidents
+    to reveal organized crime structures and repeat offender MOs.
+    """
+    try:
+        uid = PyUUID(entity_id)
+    except ValueError:
+        # For demo resilience if a non-UUID or case number is passed, find incident by case_number
+        inc = db.query(Incident).filter(Incident.case_number == entity_id).first()
+        if not inc:
+            return {"nodes": [], "edges": []}
+        uid = inc.id
+
+    # Fetch relationships where entity is source or target
+    rels = db.query(Relationship).filter(
+        (Relationship.source_id == uid) | (Relationship.target_id == uid)
+    ).all()
+
+    nodes_dict = {}
+    edges = []
+
+    # Include root node if it's an incident or person
+    root_inc = db.query(Incident).filter(Incident.id == uid).first()
+    if root_inc:
+        nodes_dict[str(root_inc.id)] = {
+            "id": str(root_inc.id), "type": "incident", "label": f"FIR {root_inc.case_number} ({root_inc.crime_type})"
+        }
+    else:
+        root_person = db.query(Person).filter(Person.id == uid).first()
+        if root_person:
+            nodes_dict[str(root_person.id)] = {
+                "id": str(root_person.id), "type": "person", "label": f"{root_person.full_name} ({root_person.role})"
+            }
+
+    for r in rels:
+        src_id, tgt_id = str(r.source_id), str(r.target_id)
+        edges.append({"source": src_id, "target": tgt_id, "type": r.relation_type})
+
+        # Resolve node metadata
+        for nid, ntype in [(src_id, r.source_type), (tgt_id, r.target_type)]:
+            if nid not in nodes_dict:
+                if ntype.lower() == "incident":
+                    inc = db.query(Incident).filter(Incident.id == (r.source_id if nid == src_id else r.target_id)).first()
+                    nodes_dict[nid] = {"id": nid, "type": "incident", "label": f"FIR {inc.case_number}" if inc else "Unknown Incident"}
+                elif ntype.lower() == "person":
+                    p = db.query(Person).filter(Person.id == (r.source_id if nid == src_id else r.target_id)).first()
+                    nodes_dict[nid] = {"id": nid, "type": "person", "label": f"{p.full_name} ({p.role})" if p else "Unknown Person"}
+
+    return {"nodes": list(nodes_dict.values()), "edges": edges}
+
