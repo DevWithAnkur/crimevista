@@ -1,2 +1,55 @@
-# others
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+ai_ml/venv/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE and Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Internal dev documentation
 dev_docs/
+
+# Database files & Docker volumes
+*.db
+*.sqlite3
+infra/pgdata/
+pgdata/
+
+# Generated Folium / Map HTML Artifacts
+*.html
+dbscan_hotspots.html
+isolation_forest_anomalies.html
+predictive_risk_map.html
+spatio_temporal_map.html
+advanced_anomalies_map.html
+hotspot_map.html
+
+# Frontend (Node.js / React / Vite)
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.eslintcache
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Large raw datasets (if > 100MB to prevent GitHub file size rejection without Git LFS)
+# data/*.csv
