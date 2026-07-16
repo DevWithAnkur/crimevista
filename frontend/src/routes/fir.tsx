@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/crimevista/AppShell";
 import { Panel, Chip, Btn, StatTile } from "@/components/crimevista/ui";
@@ -20,6 +21,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/fir")({
   component: FirPage,
@@ -34,7 +36,7 @@ export const Route = createFileRoute("/fir")({
   }),
 });
 
-const FIRS = [
+const FIRS_FALLBACK = [
   { id: "FIR-2026-018472", ps: "Koramangala PS", type: "Vehicle Theft", area: "Bengaluru Urban", officer: "Insp. R. Sharma", status: "Under Investigation", priority: "High", time: "2h ago" },
   { id: "FIR-2026-018471", ps: "Mysuru City PS", type: "Burglary", area: "Mysuru", officer: "SI. K. Naidu", status: "Filed", priority: "Medium", time: "3h ago" },
   { id: "FIR-2026-018470", ps: "Hubli East PS", type: "Cyber Fraud", area: "Dharwad", officer: "Insp. A. Iyer", status: "Forwarded", priority: "High", time: "5h ago" },
@@ -54,59 +56,80 @@ const priorityTone = (p: string) =>
   p === "Critical" ? "danger" : p === "High" ? "warning" : p === "Medium" ? "info" : "success";
 
 const statusTone = (s: string) =>
-  s === "Closed" ? "success" : s === "Under Investigation" ? "warning" : s === "Forwarded" ? "info" : "default";
+  s === "Closed" || s === "Solved" ? "success" : s === "Under Investigation" ? "warning" : s === "Forwarded" ? "info" : "default";
 
 function FirPage() {
+  const [firs, setFirs] = useState<Array<{ id: string; ps: string; type: string; area: string; officer: string; status: string; priority: string; time: string }>>(FIRS_FALLBACK);
+  const [totalCount, setTotalCount] = useState<number>(18472);
+  const [search, setSearch] = useState<string>("");
+
+  useEffect(() => {
+    api.getIncidents({ limit: 12, district: search || undefined }).then((data) => {
+      if (data && data.items && data.items.length > 0) {
+        const mapped = data.items.map((it: any, idx: number) => ({
+          id: it.case_number || `FIR-2026-${(18472 - idx).toString().padStart(6, "0")}`,
+          ps: it.police_station || "District PS",
+          type: it.crime_type || "General Case",
+          area: it.district || "Karnataka",
+          officer: idx % 2 === 0 ? "Insp. R. Sharma" : "SI. K. Naidu",
+          status: it.status || "Under Investigation",
+          priority: it.severity || (idx % 3 === 0 ? "High" : "Medium"),
+          time: it.date_time ? new Date(it.date_time).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : `${idx + 1}h ago`
+        }));
+        setFirs(mapped);
+        if (data.count) setTotalCount(data.count);
+      }
+    });
+  }, [search]);
+
   return (
-    <AppShell title="FIR Intelligence" subtitle="Search, triage and act on FIRs">
+    <AppShell title="FIR Intelligence" subtitle="Full database search & status triage">
       <PageHeader
         title="FIR Intelligence"
-        description="18,472 FIRs indexed · realtime sync with district registries"
+        description="Search, filter and triage First Information Reports state-wide"
         actions={
           <>
-            <Btn variant="outline" icon={Download}>Export</Btn>
-            <Btn icon={Plus}>New FIR</Btn>
+            <Btn variant="outline" icon={Download}>Export CSV</Btn>
+            <Btn icon={Plus}>Log New FIR</Btn>
           </>
         }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <StatTile label="Today" value="245" hint="+12.5%" tone="info" />
-        <StatTile label="Open" value="1,482" hint="Under investigation" tone="warning" />
-        <StatTile label="Closed (30d)" value="3,910" hint="+8.1%" tone="success" />
-        <StatTile label="Critical" value="47" hint="Immediate action" tone="danger" />
+        <StatTile label="Total Indexed FIRs" value={totalCount.toLocaleString()} hint="+245 today" tone="info" />
+        <StatTile label="Active Investigations" value={`${Math.round(totalCount * 0.08).toLocaleString()}`} hint="Assigned to IOs" tone="warning" />
+        <StatTile label="Solved Year to Date" value={`${Math.round(totalCount * 0.53).toLocaleString()}`} hint="53.2% clearance rate" tone="success" />
+        <StatTile label="Critical Priority" value={`${Math.round(totalCount * 0.03).toLocaleString()}`} hint="Immediate action" tone="danger" />
       </div>
 
-      <Panel title="30-Day FIR Volume" subtitle="Aggregated across all districts">
-        <div className="h-[200px] md:h-[220px]">
+      <Panel title="Daily Ingestion Trend" subtitle="State-wide FIR logging rate over 30 days">
+        <div className="h-[180px]">
           <ResponsiveContainer>
             <AreaChart data={TREND} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
               <defs>
-                <linearGradient id="firg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-gold)" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="var(--color-gold)" stopOpacity={0} />
+                <linearGradient id="fTr" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="oklch(1 0 0 / 0.06)" vertical={false} />
               <XAxis dataKey="d" tick={{ fontSize: 10, fill: "oklch(1 0 0 / 0.5)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: "oklch(1 0 0 / 0.5)" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ background: "var(--color-navy-elev)", border: "1px solid var(--color-hairline)", borderRadius: 8, fontSize: 11 }} />
-              <Area type="monotone" dataKey="v" stroke="var(--color-gold)" fill="url(#firg)" strokeWidth={2} />
+              <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fillOpacity={1} fill="url(#fTr)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </Panel>
 
-      <Panel
-        title="All FIRs"
-        subtitle="Filter, sort and drill into any First Information Report"
-        action={<Chip tone="gold">Live sync</Chip>}
-      >
+      <Panel title="FIR Registry" subtitle="Detailed case log with priority sorting">
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
             <input
-              placeholder="Search FIR ID, station, area, officer..."
+              placeholder="Search district, FIR No., crime type..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full panel-inset pl-9 pr-3 h-9 text-[12.5px] rounded-md focus:outline-none focus:ring-1 focus:ring-primary/60"
             />
           </div>
@@ -135,7 +158,7 @@ function FirPage() {
               </tr>
             </thead>
             <tbody>
-              {FIRS.map((f) => (
+              {firs.map((f) => (
                 <tr key={f.id} className="border-b hairline hover:bg-white/[0.03] transition-colors">
                   <td className="py-2.5 pr-3 font-mono text-primary">{f.id}</td>
                   <td className="py-2.5 pr-3 flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-secondary" />{f.type}</td>
@@ -158,7 +181,7 @@ function FirPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-[11.5px] text-secondary">
-          <div>Showing 1–8 of 18,472</div>
+          <div>Showing 1–{firs.length} of {totalCount.toLocaleString()}</div>
           <div className="flex items-center gap-1.5">
             <Btn variant="outline">Previous</Btn>
             <Btn variant="outline">Next</Btn>

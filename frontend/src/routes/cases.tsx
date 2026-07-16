@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/crimevista/AppShell";
 import { Panel, Chip, Btn, StatTile } from "@/components/crimevista/ui";
 import { ActivityTable } from "@/components/crimevista/ActivityTable";
 import { Briefcase, Filter, Plus, Search, User } from "lucide-react";
+import { api, type CaseItem } from "@/lib/api";
 
 export const Route = createFileRoute("/cases")({
   component: CasesPage,
@@ -14,7 +16,7 @@ export const Route = createFileRoute("/cases")({
   }),
 });
 
-const CASES = [
+const CASES_FALLBACK = [
   { id: "C-3421", title: "Bengaluru vehicle theft ring", lead: "Insp. R. Sharma", team: 6, progress: 72, status: "Active", priority: "High" },
   { id: "C-3420", title: "Mysuru burglary series", lead: "SI. K. Naidu", team: 4, progress: 45, status: "Active", priority: "Medium" },
   { id: "C-3419", title: "Hubli cyber fraud syndicate", lead: "Insp. A. Iyer", team: 8, progress: 88, status: "Closing", priority: "Critical" },
@@ -26,6 +28,33 @@ const CASES = [
 const prTone = (p: string) => p === "Critical" ? "danger" : p === "High" ? "warning" : "info";
 
 function CasesPage() {
+  const [cases, setCases] = useState<Array<{ id: string; title: string; lead: string; team: number; progress: number; status: string; priority: string }>>(CASES_FALLBACK);
+  const [search, setSearch] = useState<string>("");
+
+  useEffect(() => {
+    api.getCases().then((data) => {
+      if (data && data.cases && data.cases.length > 0) {
+        const mapped = data.cases.map((c, idx) => ({
+          id: c.case_number || `C-${3421 - idx}`,
+          title: c.title || `${c.district} ${c.crime_type || "Investigation"}`,
+          lead: c.lead_officer || "Insp. R. Sharma",
+          team: c.team_size || Math.max(3, 8 - idx),
+          progress: c.progress || Math.min(95, 30 + idx * 12),
+          status: c.status || "Active",
+          priority: c.priority || (idx % 2 === 0 ? "High" : "Medium")
+        }));
+        setCases(mapped);
+      }
+    });
+  }, []);
+
+  const filteredCases = cases.filter(c =>
+    !search ||
+    c.title.toLowerCase().includes(search.toLowerCase()) ||
+    c.id.toLowerCase().includes(search.toLowerCase()) ||
+    c.lead.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <AppShell title="Case Management" subtitle="Investigations, teams and progress">
       <PageHeader
@@ -50,7 +79,12 @@ function CasesPage() {
         <div className="flex items-center gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
-            <input placeholder="Search case, lead, tag..." className="w-full panel-inset pl-9 pr-3 h-9 text-[12.5px] rounded-md focus:outline-none focus:ring-1 focus:ring-primary/60" />
+            <input
+              placeholder="Search case, lead, tag..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full panel-inset pl-9 pr-3 h-9 text-[12.5px] rounded-md focus:outline-none focus:ring-1 focus:ring-primary/60"
+            />
           </div>
           {["Priority", "Zone", "Status"].map((f) => (
             <Btn key={f} variant="outline" icon={Filter}>{f}</Btn>
@@ -58,7 +92,7 @@ function CasesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {CASES.map((c) => (
+          {filteredCases.map((c) => (
             <div key={c.id} className="panel-inset p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">

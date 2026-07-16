@@ -1,9 +1,10 @@
 import pandas as pd
 import folium
+from pathlib import Path
 from sklearn.ensemble import IsolationForest
 
 # 1. Load the dataset
-file_path = r'E:\Programming\crimevista\data\FIR_Details_Data.csv'
+file_path = Path(__file__).resolve().parent.parent / 'data' / 'FIR_Details_Data.csv'
 df = pd.read_csv(file_path, low_memory=False)
 
 lat_col = 'Latitude'

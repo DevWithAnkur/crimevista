@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { api, type HotspotItem } from "@/lib/api";
 
-const HOTSPOTS = [
+const FALLBACK_HOTSPOTS = [
   { rank: 1, name: "Koramangala, Bengaluru", level: "Very High", tone: "bg-destructive/25 text-destructive" },
   { rank: 2, name: "Mysuru City", level: "High", tone: "bg-warning/25 text-warning" },
   { rank: 3, name: "Yeshwanthpur, Bengaluru", level: "High", tone: "bg-warning/25 text-warning" },
@@ -9,6 +12,27 @@ const HOTSPOTS = [
 ];
 
 export function HeatmapPanel() {
+  const [hotspots, setHotspots] = useState<Array<{ rank: number; name: string; level: string; tone: string }>>(FALLBACK_HOTSPOTS);
+
+  useEffect(() => {
+    api.getHotspots().then((data) => {
+      if (data && data.hotspots && data.hotspots.length > 0) {
+        const mapped = data.hotspots.slice(0, 5).map((h, idx) => {
+          const score = h.score || (h.incident_count / 100);
+          const level = score >= 0.85 ? "Very High" : score >= 0.7 ? "High" : "Medium";
+          const tone = score >= 0.85 ? "bg-destructive/25 text-destructive" : score >= 0.7 ? "bg-warning/25 text-warning" : "bg-info/25 text-info";
+          return {
+            rank: idx + 1,
+            name: `${h.district} (${h.crime_type || "Cluster"})`,
+            level,
+            tone
+          };
+        });
+        setHotspots(mapped);
+      }
+    });
+  }, []);
+
   return (
     <div className="panel p-5 flex flex-col">
       <div className="flex items-start justify-between mb-4">
@@ -32,7 +56,7 @@ export function HeatmapPanel() {
             Top Hotspots
           </div>
           <ul className="space-y-1.5">
-            {HOTSPOTS.map((h) => (
+            {hotspots.map((h) => (
               <li
                 key={h.rank}
                 className="flex items-center gap-3 panel-inset px-3 py-2.5 hover:border-primary/40 transition-colors cursor-pointer"
@@ -47,9 +71,9 @@ export function HeatmapPanel() {
               </li>
             ))}
           </ul>
-          <button className="mt-3 w-full gold-chip rounded-md py-2 text-[12px] font-semibold flex items-center justify-center gap-1 hover:brightness-110">
+          <Link to="/heatmap" className="mt-3 w-full gold-chip rounded-md py-2 text-[12px] font-semibold flex items-center justify-center gap-1 hover:brightness-110 block text-center">
             View Full Heatmap <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

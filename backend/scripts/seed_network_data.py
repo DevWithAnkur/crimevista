@@ -12,8 +12,9 @@ from app.models import Incident, Person, Relationship
 
 def seed_network():
     print("Ensuring database tables exist...")
-    with engine.begin() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+    if engine.dialect.name != "sqlite":
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()

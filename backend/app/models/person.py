@@ -1,6 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, Uuid as UUID
 from app.db.session import Base
 
 class Person(Base):

@@ -1,0 +1,13 @@
+.venv
+node_modules
+dist
+.output
+.git
+.gemini
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+*.log
+data/*.csv

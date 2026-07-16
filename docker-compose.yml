@@ -21,7 +21,7 @@ services:
 
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: backend/Dockerfile
     container_name: crimevista_backend
     restart: always
@@ -34,12 +34,12 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../backend:/workspace/backend
-      - ../ai_ml:/workspace/ai_ml
+      - ./backend:/workspace/backend
+      - ./ai_ml:/workspace/ai_ml
 
   ai_ml:
     build:
-      context: ..
+      context: .
       dockerfile: ai_ml/Dockerfile
     container_name: crimevista_ai_ml
     restart: always
@@ -48,11 +48,11 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ../ai_ml:/workspace/ai_ml
+      - ./ai_ml:/workspace/ai_ml
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: crimevista_frontend
     restart: always
@@ -63,7 +63,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ../frontend:/app
+      - ./frontend:/app
       - /app/node_modules
 
 volumes:

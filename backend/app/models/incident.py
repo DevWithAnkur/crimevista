@@ -1,8 +1,11 @@
+import os
 import uuid
-from sqlalchemy import Column, String, Float, DateTime, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Float, DateTime, Text, Uuid as UUID
 from geoalchemy2 import Geometry
 from app.db.session import Base
+from app.core.config import settings
+
+is_sqlite = settings.DATABASE_URL.startswith('sqlite')
 
 class Incident(Base):
     __tablename__ = "incidents"
@@ -14,7 +17,7 @@ class Incident(Base):
     district = Column(String(100), index=True, nullable=False)
     police_station = Column(String(150), index=True, nullable=False)
     location_name = Column(Text)
-    geom = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    geom = Column(String(255) if is_sqlite else Geometry(geometry_type='POINT', srid=4326), nullable=True)
     latitude = Column(Float)
     longitude = Column(Float)
     severity = Column(String(50), index=True) # High, Medium, Low

@@ -6,7 +6,7 @@ if backend_dir not in sys.path:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import health, dashboard, incidents, analytics
+from app.api.v1 import health, dashboard, incidents, analytics, geo
 
 app = FastAPI(
     title="CrimeVista API",
@@ -28,6 +28,7 @@ app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(dashboard.router, prefix="/api/v1", tags=["Dashboard"])
 app.include_router(incidents.router, prefix="/api/v1", tags=["Incidents"])
 app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics & AI"])
+app.include_router(geo.router, prefix="/api/v1", tags=["Geographic Reference"])
 
 @app.get("/")
 def root():
