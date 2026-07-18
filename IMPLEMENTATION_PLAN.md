@@ -1,114 +1,239 @@
 # CrimeVista Implementation Plan & Engineering Roadmap
 
-This document serves as the master implementation blueprint and status record for **CrimeVista** (`AI-Driven Crime Analytics & Visualization Platform for Karnataka State Police & SCRB`). It details exactly what has been built across the backend, AI/ML, and database layers, and specifies our full integration roadmap for connecting the frontend dashboard dynamically to our backend services.
+This document reflects the current status of CrimeVista as of 2026-07-19 and sets the next practical milestones for stabilization, feature expansion, and product hardening.
 
 ---
 
-## 1. Project Execution Status
+## 1. Current status
 
-| Phase | Responsibility Area | Owner(s) | Status | Key Deliverables |
-| :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | Database Architecture & Core Models | **Kamran & Saksham** | ✅ **100% Completed** | PostGIS container setup, SQLAlchemy models (`Incident`, `Person`, `Relationship`), session management (`session.py`). |
-| **Phase 2** | Backend REST API Service (`v1`) | **Kamran & Saksham** | ✅ **100% Completed** | FastAPI entrypoint (`main.py`), endpoints for `/health`, `/dashboard/summary`, `/incidents`, `/analytics/hotspots`, `/analytics/network/{entity_id}`. |
-| **Phase 3** | Data Ingestion & Criminological Seeding | **Kamran & Saksham** | ✅ **100% Completed** | Batch CSV ETL loader (`ingest_fir_data.py`), repeat offender & syndicate seeder (`seed_network_data.py`). |
-| **Phase 4** | AI/ML Intelligence Engine & Testing | **Ankur & Kamran** | ✅ **100% Completed** | DBSCAN spatial clustering, Isolation Forest/LOF anomalies, Random Forest risk scoring, `api_service.py` explainability, 4/4 automated unit tests passing (`test_pipeline.py`). |
-| **Phase 5** | Frontend & Backend/AI Dynamic Integration | **Shivaleela & Team** | ⏳ **In Progress** | Wire React 19 + Vite dashboard (`src/`) to live FastAPI (`/api/v1`) & AI/ML endpoints (`/analytics/risk`, `/analytics/anomalies`, `/analytics/analyze`). |
-| **Phase 6** | End-to-End Testing & Demo Hardening | **All Team Members** | ⏳ **Pending** | Integration test suite (`test_api_integration.py`), CORS verification, 5-minute hackathon presentation flow. |
+CrimeVista is now in a working local-demo state with the core stack connected end to end:
 
----
+- Backend: FastAPI services are running and serving analytics endpoints.
+- Database: the app can use a local SQLite fallback or the intended PostgreSQL/PostGIS-backed setup.
+- Frontend: the React/Vite dashboard is built successfully and can be served locally.
+- AI/ML: the analytics layer is producing explainable outputs for risk, anomalies, and incident analysis.
 
-## 2. Completed Technical Architecture
+### Verified evidence
 
-### A. Database Layer & Models
-* **Database Engine**: PostgreSQL + PostGIS (`infra/docker-compose.yml` on port `5432`).
-* **Connection Management**: Configured in `backend/app/db/session.py` with automatic connection pool pre-pinging (`pool_size=20`, `max_overflow=10`).
-* **Core Relational Schema (`app/models/`)**:
-  * `incidents` (`Incident`): Stores case numbers, crime types, timestamps, district/police station metadata, severity, status, and PostGIS `POINT(longitude, latitude)` geometry.
-  * `persons` (`Person`): Stores full names, criminological roles (`Suspect`, `Victim`, `Witness`), age, gender, and aliases.
-  * `relationships` (`Relationship`): Directional link analysis edges (`source_id` -> `target_id`) capturing connections like `involved_in`, `co_accused`, `victim_of`, `syndicate_associate`.
-
-### B. Backend REST API (`http://localhost:8000/api/v1`)
-* `GET /health` — Checks service and database connectivity (`SELECT 1`).
-* `GET /dashboard/summary` — Returns total incident counts, top 5 high-risk districts by volume, and top 6 crime trends.
-* `GET /incidents` — Paginated and filtered incident explorer supporting case-insensitive queries (`district`, `crime_type`, `police_station`, `severity`).
-* `GET /analytics/hotspots` — Real-time **Haversine DBSCAN spatial clustering** directly on coordinates (`eps=0.5km, min_samples=10`), returning cluster centroids and normalized risk scores.
-* `GET /analytics/network/{entity_id}` — Resolves any FIR case number or entity UUID into node-edge graph structures (`nodes: [...]`, `edges: [...]`).
-
-### C. AI/ML Analytical Modules (`ai_ml/`)
-* **`api_service.py`**: `analyze_crime_incident()` returning `hotspot_score`, `anomaly_flag`, `risk_category`, `explanation_text`, and structured `explainable_insights` (Task 4 explainability).
-* **`predictive_risk.py`**: `RandomForestClassifier` scoring district risk based on historical volume quantiles and coordinates.
-* **`anomaly_detection.py` & `advanced_anomalies.py`**: `IsolationForest` and `LocalOutlierFactor` combined with rule-based critical flags (`VICTIM COUNT >= 3` or `Accused Count >= 5`).
-* **`test_pipeline.py`**: Automated unittest suite (`Ran 4 tests in 0.12s -> OK`).
+- Backend integration tests: 11/11 passing through Python’s unittest runner.
+- Frontend build: Vite production build completed successfully.
+- Live backend analytics endpoints: risk and incident analysis responses were returned successfully during verification.
 
 ---
 
-## 3. Immediate Implementation Roadmap (Phase 5: Dynamic Integration)
+## 2. What is already implemented
 
-### Step 1: Backend API & AI/ML Hardening (`backend/app/api/v1/`)
-1. **Enhance `/analytics/risk`**: Replace static output with live evaluation aggregating `Incident` counts per district and applying `predictive_risk.py` quantile/RandomForest categorization.
-2. **Add `GET /analytics/anomalies`**: Query `Incident` records matching critical rule criteria (`VICTIM COUNT >= 3` or `Accused Count >= 5` or `severity == 'High'`) and compute `IsolationForest` scores.
-3. **Add `POST /analytics/analyze`**: Bridge `ai_ml.api_service.analyze_crime_incident` to process real-time incident payloads.
-4. **Add `GET /geo/districts` & `GET /geo/police-stations`**: Provide distinct geographic lookup endpoints for frontend filters.
+### Backend
 
-### Step 2: Frontend API Client & Component Wiring (`frontend/src/`)
-1. **Create API Client (`src/lib/api.ts`)**: Define typed HTTP wrappers calling `http://localhost:8000/api/v1`.
-2. **Wire Landing Overview (`routes/index.tsx`, `ActivityTable.tsx`)**: Fetch `GET /dashboard/summary` and `GET /incidents?limit=20` to populate KPI cards and live tables.
-3. **Wire Hotspot Map (`HeatmapPanel.tsx`, `routes/heatmap.tsx`)**: Connect cluster circles to `GET /analytics/hotspots` and allow embedding `dbscan_hotspots.html` in drill-down views.
-4. **Wire Criminological Network Graph (`routes/relationships.tsx`)**: Fetch `GET /analytics/network/CASE-2026-BLR-101` to dynamically construct suspect-incident networks.
-5. **Wire AI Intelligence & Predictions (`AiIntelligence.tsx`, `routes/predictive.tsx`)**: Connect brief cards to `GET /analytics/risk` and `GET /analytics/anomalies`.
-6. **Wire FIR Search & Filters (`routes/fir.tsx`, `routes/cases.tsx`)**: Connect district dropdowns and search grids to `GET /incidents` and `GET /geo/districts`.
+- FastAPI app entrypoint and router registration.
+- Endpoints for health, dashboard summary, incidents, analytics, geo lookups, and relationship/network analysis.
+- Database models for incidents, persons, and relationships.
+- AI/ML-driven analysis hooks for risk scoring, anomaly detection, and explainable incident insights.
 
-### Step 3: Automated Integration Verification
-* Create `backend/tests/test_api_integration.py` to run automated end-to-end FastAPI assertions alongside `ai_ml/test_pipeline.py`.
+### Frontend
+
+- Main dashboard layout and route-based UI shell.
+- Dashboard cards, filters, AI intelligence panel, heatmap panel, and case/incident views.
+- Frontend API client that calls the backend analytics endpoints.
+
+### Data layer
+
+- Seeded incident and relationship data for local demo use.
+- Support for PostgreSQL/PostGIS and a local SQLite fallback during development.
 
 ---
 
-## 4. Build, Run & Verification Commands
+## 3. Immediate priorities
 
-### A. Start Database & Backend API
+### Priority 1 — Stabilize the experience
+
+These are the most important improvements before adding larger features.
+
+1. Improve loading and empty states
+   - Show skeletons and graceful fallbacks while data is loading.
+   - Avoid blank UI sections when the API is slow or unavailable.
+
+2. Harden backend error handling
+   - Return consistent error responses for invalid requests.
+   - Add better logging and request validation.
+
+3. Improve environment consistency
+   - Keep the repo-level .env flow reliable for local development and future deployment.
+   - Standardize the frontend/backend URL configuration.
+
+4. Add better API documentation and sample payloads
+   - Keep the API easier to explore and demo.
+
+---
+
+## 4. Next implementation roadmap
+
+### Phase A — Data quality and analytics depth
+
+Goal: make the outputs more realistic and useful.
+
+1. Expand seeded demo data
+   - Add more districts, police stations, incident types, and network relationships.
+   - Create a richer dataset so analytics results look less synthetic.
+
+2. Improve analytics logic
+   - Make hotspot scoring more nuanced.
+   - Improve risk classification using richer historical context.
+   - Add severity trend and district trend summaries.
+
+3. Add richer API responses
+   - Incident detail endpoint.
+   - District trend endpoint.
+   - Repeat offender summary endpoint.
+   - Alert or priority recommendation endpoint.
+
+### Phase B — Frontend enhancement
+
+Goal: turn the dashboard into a more operational experience.
+
+1. Add deeper drill-down views
+   - Open a case from the incident table.
+   - Show district-level trend details.
+   - Show hotspot details and supporting incidents.
+
+2. Improve filtering and search
+   - Date range filter.
+   - District + crime-type + severity filters.
+   - Police station and case number search.
+
+3. Improve map and graph experiences
+   - Click a hotspot to reveal related incidents.
+   - Expand network graphs into a full investigation UI.
+
+4. Add better visual storytelling
+   - Trend charts.
+   - Risk score timeline.
+   - “Why this alert was flagged” explanations.
+
+### Phase C — Product features
+
+Goal: add a stronger real-world utility layer.
+
+1. Predictive patrol recommendation
+   - Recommend where officers should be deployed based on hotspot severity and recent incidents.
+
+2. Alerting and recommendation engine
+   - Surface new anomalies and suggest actions.
+   - Provide a short recommendation panel for investigators.
+
+3. Case workflow support
+   - Link an analytic insight to one or more active cases.
+   - Track case status, assigned officer, and follow-up notes.
+
+4. Role-based views
+   - Analyst view.
+   - Officer view.
+   - Admin/command-center view.
+
+### Phase D — Production hardening
+
+Goal: make the app demo-ready and deployment-ready.
+
+1. Container and deployment setup
+   - Ensure frontend, backend, and DB can be launched consistently via Docker.
+
+2. CI/CD basics
+   - Add automated build and test checks for every change.
+
+3. Security and governance basics
+   - Add authentication and role checks.
+   - Harden environment variables and secrets handling.
+
+4. Documentation and demo preparation
+   - Prepare a clean walkthrough for hackathon or stakeholder demos.
+
+---
+
+## 5. Recommended sprint order
+
+### Sprint 1 — Stabilization
+
+- Improve loading states and empty states.
+- Improve API error handling.
+- Fix any remaining UI inconsistencies.
+
+### Sprint 2 — Analytics quality
+
+- Expand seeded data.
+- Improve risk and anomaly output quality.
+- Add richer analytics API responses.
+
+### Sprint 3 — Investigation experience
+
+- Add drill-down views.
+- Improve filters/search.
+- Enhance hotspot and network interactions.
+
+### Sprint 4 — Operational features
+
+- Add patrol recommendation and alerting.
+- Add case workflow support.
+
+---
+
+## 6. Suggested demo narrative
+
+The project story should stay simple and compelling:
+
+1. Problem
+   - Crime data is fragmented and reactive.
+
+2. Solution
+   - CrimeVista brings FIR data, hotspots, relationships, and AI insights into one workspace.
+
+3. Evidence
+   - The dashboard shows hotspots, anomalies, and explainable risk signals.
+
+4. Value
+   - Investigators can act faster on hotspots and repeat patterns instead of relying on disconnected reporting.
+
+---
+
+## 7. Run and verify locally
+
+### Start backend
+
 ```bash
-# 1. Start PostGIS container
-cd infra && docker compose up -d db
-
-# 2. Return to project root & activate virtual environment
-cd ..
+cd /Users/md.kamranalam/Programming/hackathon/crimevista
 source .venv/bin/activate
-
-# 3. Ensure network demo relationships are seeded
-.venv/bin/python backend/scripts/seed_network_data.py
-
-# 4. Start the FastAPI development server
-.venv/bin/uvicorn backend.app.main:app --reload --port 8000
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
-*Live Interactive API Docs:* **`http://localhost:8000/docs`**
 
-### B. Start Frontend Development Server
+### Start frontend
+
 ```bash
-cd frontend
-npm run dev
+cd /Users/md.kamranalam/Programming/hackathon/crimevista/frontend
+npm run dev -- --host 127.0.0.1 --port 8080
 ```
-*Access Web Dashboard:* **`http://localhost:5173`**
 
-### C. Run All Automated Verification Tests
+### Run backend tests
+
 ```bash
-# AI/ML Pipeline Tests
-.venv/bin/python -m unittest ai_ml/test_pipeline.py -v
+cd /Users/md.kamranalam/Programming/hackathon/crimevista
+source .venv/bin/activate
+python -m unittest discover -s backend/tests -v
+```
 
-# Backend & Integration Tests (once created)
-.venv/bin/python -m pytest backend/tests/test_api_integration.py -v
+### Build frontend
+
+```bash
+cd /Users/md.kamranalam/Programming/hackathon/crimevista/frontend
+npm run build
 ```
 
 ---
 
-## 5. Hackathon Demo Narrative (The 5-Minute Story)
+## 8. Best next feature to build
 
-1. **The Problem (0:00 - 1:00)**:
-   * Explain how Karnataka State Police / SCRB face data silos, static Excel reporting, and delayed response times.
-2. **The Solution Overview (1:00 - 2:00)**:
-   * Introduce **CrimeVista**: An integrated intelligence platform connecting real-time FIR records to spatiotemporal hotspots and explainable AI insights.
-3. **Spatiotemporal Hotspot Drill-down (2:00 - 3:15)**:
-   * Show the interactive district drill-down (`/analytics/hotspots`). Highlight how Haversine DBSCAN clusters thousands of isolated coordinates into actionable red-zone pulsing clusters.
-4. **Criminological Network & Link Analysis (3:15 - 4:15)**:
-   * Show the relationship graph (`/analytics/network/CASE-2026-BLR-101`). Demonstrate how CrimeVista breaks silos by connecting repeat offenders across jurisdictions (`Ramesh 'Bhai' Kumar`), revealing hidden co-accused syndicates (`Suresh Gowda`) and recurring Modus Operandi (MO).
-5. **Explainable AI & Strategic Impact (4:15 - 5:00)**:
-   * Conclude with the AI Predictive Risk Dashboards (`/analytics/risk` & `/analytics/anomalies`), explaining why specific districts are flagged for elevated risk and how this shifts SCRB from reactive reporting to a **Strategic Intelligence Hub**.
+The highest-impact next feature is a predictive patrol recommendation module.
+
+Why this one first:
+
+- It has clear value for real operations.
+- It is easy to explain in a demo.
+- It connects analytics directly to action.
