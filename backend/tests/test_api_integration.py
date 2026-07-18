@@ -92,6 +92,12 @@ class TestApiIntegration(unittest.TestCase):
         self.assertIn("anomalies", data)
         self.assertIn("count", data)
 
+    def test_analytics_patrol_recommendations(self):
+        response = self.client.get("/api/v1/analytics/patrol-recommendations")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("recommendations", data)
+
     def test_analytics_network(self):
         response = self.client.get("/api/v1/analytics/network/CASE-2026-BLR-101")
         self.assertEqual(response.status_code, 200)

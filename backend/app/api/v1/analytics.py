@@ -21,6 +21,7 @@ if project_root not in sys.path:
 
 try:
     from ai_ml.api_service import analyze_crime_incident
+    from ai_ml.patrol_recommendation import generate_patrol_recommendations
 except ImportError:
     # Graceful fallback if ai_ml is not found
     def analyze_crime_incident(inc, stats):
@@ -31,6 +32,8 @@ except ImportError:
             "explanation_text": f"Incident in {inc.get('District_Name', 'Unknown')} evaluated.",
             "explainable_insights": ["Evaluation completed via fallback engine."]
         })
+    def generate_patrol_recommendations(incidents):
+        return []
 
 router = APIRouter()
 
@@ -136,6 +139,38 @@ def get_risk_scores(db: Session = Depends(get_db)):
         })
         
     return {"items": sorted(items, key=lambda x: x["risk_score"], reverse=True)}
+
+@router.get("/analytics/patrol-recommendations")
+def get_patrol_recommendations(
+    district: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns AI-generated actionable patrol recommendations based on recent incident density and severity.
+    """
+    query = db.query(Incident).filter(Incident.latitude.isnot(None), Incident.longitude.isnot(None))
+    if district:
+        query = query.filter(Incident.district.ilike(f"%{district}%"))
+        
+    # Get recent incidents for patrol calculation
+    records = query.order_by(Incident.date_time.desc()).limit(1000).all()
+    
+    if not records:
+        return {"recommendations": []}
+        
+    incidents_list = [
+        {
+            "latitude": r.latitude,
+            "longitude": r.longitude,
+            "severity": r.severity,
+            "district": r.district,
+            "crime_type": r.crime_type
+        }
+        for r in records
+    ]
+    
+    recommendations = generate_patrol_recommendations(incidents_list)
+    return {"recommendations": recommendations}
 
 @router.get("/analytics/anomalies")
 def get_anomalies(

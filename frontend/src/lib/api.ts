@@ -63,6 +63,17 @@ export interface AnomalyItem {
   reason: string;
 }
 
+export interface PatrolRecommendation {
+  zone_id: string;
+  center_latitude: number;
+  center_longitude: number;
+  district: string;
+  incident_count: number;
+  priority_score: number;
+  priority: "Critical" | "High" | "Medium";
+  rationale: string;
+}
+
 export interface NetworkNode {
   id: string;
   type: "person" | "incident" | string;
@@ -421,6 +432,53 @@ export const api = {
     };
     return fetchWithFallback<{ anomalies: AnomalyItem[]; count: number }>(
       `/analytics/anomalies${queryString}`,
+      fallback,
+    );
+  },
+
+  async getPatrolRecommendations(params?: {
+    district?: string;
+  }): Promise<{ recommendations: PatrolRecommendation[] }> {
+    const query = new URLSearchParams();
+    if (params?.district) query.append("district", params.district);
+
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    const fallback = {
+      recommendations: [
+        {
+          zone_id: "Z-101",
+          center_latitude: 12.9716,
+          center_longitude: 77.5946,
+          district: "Bengaluru Urban",
+          incident_count: 12,
+          priority_score: 28,
+          priority: "Critical",
+          rationale: "Density cluster of 12 incidents. Primary activity: Vehicle Theft. Suggest increased visibility.",
+        },
+        {
+          zone_id: "Z-102",
+          center_latitude: 12.2958,
+          center_longitude: 76.6394,
+          district: "Mysuru",
+          incident_count: 8,
+          priority_score: 16,
+          priority: "High",
+          rationale: "Density cluster of 8 incidents. Primary activity: Burglary. Suggest increased visibility.",
+        },
+        {
+          zone_id: "Z-103",
+          center_latitude: 15.3647,
+          center_longitude: 75.1240,
+          district: "Dharwad",
+          incident_count: 5,
+          priority_score: 9,
+          priority: "Medium",
+          rationale: "Density cluster of 5 incidents. Primary activity: Cyber Fraud. Suggest increased visibility.",
+        },
+      ] as PatrolRecommendation[],
+    };
+    return fetchWithFallback<{ recommendations: PatrolRecommendation[] }>(
+      `/analytics/patrol-recommendations${queryString}`,
       fallback,
     );
   },

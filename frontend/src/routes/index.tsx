@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/crimevista/AppShell";
 import { KpiCard } from "@/components/crimevista/KpiCard";
+import { KpiSkeleton } from "@/components/crimevista/ui/Skeleton";
 import { HeatmapPanel } from "@/components/crimevista/HeatmapPanel";
 import { AiIntelligence } from "@/components/crimevista/AiIntelligence";
 import { ChartsPanel } from "@/components/crimevista/ChartsPanel";
 import { ActivityTable } from "@/components/crimevista/ActivityTable";
+import { PatrolRecommendationPanel } from "@/components/crimevista/PatrolRecommendationPanel";
 import { api, type DashboardSummary } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
@@ -82,20 +84,37 @@ function Dashboard() {
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
-          <KpiCard label="Total FIRs Indexed" value={totalFirs} delta="12.5%" trend="up" hint="state registry" icon={FileText} tone="info" />
-          <KpiCard label="Active Investigations" value={activeInv} delta="8.3%" trend="up" hint="open cases" icon={Briefcase} tone="gold" />
-          <KpiCard label="High Risk Districts" value={highRiskCnt} delta="2" trend="up" hint="top volume" icon={MapPinned} tone="danger" />
-          <KpiCard label="Solved Cases" value={solvedCnt} delta="40.1%" trend="up" hint="year to date" icon={CheckCircle2} tone="success" />
-          <KpiCard label="Prediction Accuracy" value="92.4%" delta="2.1%" trend="up" hint="AI model v4.2" icon={Brain} tone="gold" />
-          <KpiCard label="Emergency Alerts" value="12" delta="4.1%" trend="down" hint="active now" icon={BellRing} tone="warning" />
+          {!summary ? (
+            <>
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+            </>
+          ) : (
+            <>
+              <KpiCard label="Total FIRs Indexed" value={totalFirs} delta="12.5%" trend="up" hint="state registry" icon={FileText} tone="info" />
+              <KpiCard label="Active Investigations" value={activeInv} delta="8.3%" trend="up" hint="open cases" icon={Briefcase} tone="gold" />
+              <KpiCard label="High Risk Districts" value={highRiskCnt} delta="2" trend="up" hint="top volume" icon={MapPinned} tone="danger" />
+              <KpiCard label="Solved Cases" value={solvedCnt} delta="40.1%" trend="up" hint="year to date" icon={CheckCircle2} tone="success" />
+              <KpiCard label="Prediction Accuracy" value="92.4%" delta="2.1%" trend="up" hint="AI model v4.2" icon={Brain} tone="gold" />
+              <KpiCard label="Emergency Alerts" value="12" delta="4.1%" trend="down" hint="active now" icon={BellRing} tone="warning" />
+            </>
+          )}
         </div>
       </section>
 
       <ChartsPanel />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 md:gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 md:gap-5 mb-4">
         <HeatmapPanel />
         <AiIntelligence />
+      </div>
+
+      <div className="mb-4">
+        <PatrolRecommendationPanel />
       </div>
 
       <ActivityTable />
