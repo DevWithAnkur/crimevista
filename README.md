@@ -11,6 +11,13 @@ The platform moves law enforcement from reactive, siloed Excel sheet reporting t
 
 ---
 
+## 🟢 Live Demo
+
+- **Frontend (Web Dashboard):** [https://crimevista.onrender.com](https://crimevista.onrender.com)
+- **Backend (FastAPI & AI/ML):** [https://crimevista-backend-ufdv.onrender.com/docs](https://crimevista-backend-ufdv.onrender.com/docs)
+
+---
+
 ## 🚀 Key Capabilities Built
 
 ### 1. Advanced Spatiotemporal Hotspots (`Haversine DBSCAN`)
